@@ -2,10 +2,10 @@ const presets = {
   cards: {
     0: {
       name: "Debug Card 1",
-      image: "../assets/cards/0.png",
+      image: "assets/cards/0.png",
       background: "#fdd",
     },
-    1: { name: "Debug Card 2", image: "/assets/cards/1.png" },
+    1: { name: "Debug Card 2", image: "assets/cards/1.png" },
   },
 };
 
