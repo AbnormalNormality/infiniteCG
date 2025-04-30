@@ -88,3 +88,28 @@ const endTurnButton = document.getElementById("endTurn");
 endTurnButton.onclick = endTurn;
 
 startTurn();
+
+function clearCacheAndReload() {
+  if ("caches" in window) {
+    caches
+      .keys()
+      .then(function (names) {
+        for (let name of names) {
+          caches.delete(name);
+        }
+      })
+      .then(function () {
+        window.location.reload(true); // Force reload
+      });
+  } else {
+    window.location.reload(true);
+  }
+}
+
+function handleKeyRelease(event) {
+  if (event.altKey && event.code === "KeyR") {
+    clearCacheAndReload();
+  }
+}
+
+document.addEventListener("keyup", handleKeyRelease);
