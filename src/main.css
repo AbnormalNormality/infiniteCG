@@ -1,0 +1,85 @@
+:root {
+  --hand-background: #eee;
+  --card-background: #ddd;
+  --cardName-background: #cccd;
+  --cardName-text-colour: #000;
+  --cardName-shadow-colour: #fff;
+
+  --border-colour: #000;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  justify-content: center;
+}
+
+#hand {
+  background-color: var(--hand-colour);
+  border-top: 1px solid var(--border-colour);
+  align-items: center;
+  justify-content: space-evenly;
+  overflow-x: auto;
+  gap: 2%;
+  padding: 0 2%;
+  position: relative;
+  overflow-y: hidden;
+}
+
+.card {
+  background-color: var(--card-background);
+  height: 85%;
+  position: relative;
+  aspect-ratio: 1 / 2;
+  border-radius: 10px;
+  max-height: 90%;
+  transition: transform 0.3s ease;
+  transform-origin: center center;
+  z-index: 1;
+}
+
+.card:hover {
+  transform: scale(1, 1.1);
+  z-index: 10;
+}
+
+.cardName {
+  background-color: var(--cardName-background);
+  width: fit-content;
+  margin: 0 auto;
+  z-index: 1;
+  font-size: 20px;
+  position: relative;
+  color: var(--cardName-text-colour);
+  text-shadow: -1px -1px 0 var(--cardName-shadow-colour),
+    1px -1px 0 var(--cardName-shadow-colour),
+    -1px 1px 0 var(--cardName-shadow-colour),
+    1px 1px 0 var(--cardName-shadow-colour);
+  padding: 0 5px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.cardImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  object-fit: cover;
+}
+
+#enemies {
+  border-bottom: 1px solid var(--border-colour);
+}
+
+#hand,
+#enemies,
+#middle {
+  flex: 1;
+  display: flex;
+}
