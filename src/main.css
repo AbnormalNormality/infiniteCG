@@ -6,6 +6,8 @@
   --cardName-shadow-colour: #fff;
 
   --border-colour: #000;
+
+  --card-aspect-ratio: 40 / 59; /* StS card dimensions */
 }
 
 body {
@@ -33,12 +35,14 @@ body {
   background-color: var(--card-background);
   height: 85%;
   position: relative;
-  aspect-ratio: 1 / 2;
+  aspect-ratio: var(--card-aspect-ratio);
   border-radius: 10px;
   max-height: 90%;
   transition: transform 0.3s ease;
   transform-origin: center center;
   z-index: 1;
+
+  cursor: grab;
 }
 
 .card:hover {
@@ -61,6 +65,7 @@ body {
   padding: 0 5px;
   border-radius: 10px;
   text-align: center;
+  user-select: none;
 }
 
 .cardImage {

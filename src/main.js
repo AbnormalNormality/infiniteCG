@@ -62,6 +62,81 @@ function shuffle(array) {
 
 const hand = document.getElementById("hand");
 
+let scrollAmount = 0;
+let isScrolling = false;
+
+hand.addEventListener(
+  "wheel",
+  function (event) {
+    scrollAmount += event.deltaY;
+    event.preventDefault();
+    if (!isScrolling) smoothScroll();
+  },
+  { passive: false }
+);
+
+function smoothScroll() {
+  isScrolling = true;
+  const step = () => {
+    const delta = scrollAmount * 0.25;
+    hand.scrollLeft += delta;
+    scrollAmount -= delta;
+
+    if (Math.abs(scrollAmount) > 0.5) {
+      requestAnimationFrame(step);
+    } else {
+      scrollAmount = 0;
+      isScrolling = false;
+    }
+  };
+  requestAnimationFrame(step);
+}
+
+let draggedCard = null;
+let offsetX = 0;
+let offsetY = 0;
+
+function onMouseDown(event) {
+  const original = event.currentTarget;
+
+  const rect = original.getBoundingClientRect();
+
+  draggedCard = original.cloneNode(true);
+  draggedCard.style.position = "absolute";
+  draggedCard.style.left = `${rect.left}px`;
+  draggedCard.style.top = `${rect.top}px`;
+  draggedCard.style.width = `${rect.width}px`;
+  draggedCard.style.height = `${rect.height}px`;
+  draggedCard.style.zIndex = 1000;
+  draggedCard.style.pointerEvents = "none";
+  draggedCard.style.margin = 0;
+
+  document.body.appendChild(draggedCard);
+
+  offsetX = event.clientX - rect.left;
+  offsetY = event.clientY - rect.top;
+
+  document.addEventListener("mousemove", onMouseMove);
+  document.addEventListener("mouseup", onMouseUp);
+}
+
+function onMouseMove(event) {
+  if (draggedCard) {
+    draggedCard.style.left = `${event.clientX - offsetX}px`;
+    draggedCard.style.top = `${event.clientY - offsetY}px`;
+  }
+}
+
+function onMouseUp(event) {
+  if (draggedCard) {
+    draggedCard.remove();
+    draggedCard = null;
+  }
+
+  document.removeEventListener("mousemove", onMouseMove);
+  document.removeEventListener("mouseup", onMouseUp);
+}
+
 function renderHand() {
   hand.innerHTML = "";
 
@@ -69,6 +144,7 @@ function renderHand() {
     const cardElement = document.createElement("div");
     cardElement.className = "card";
     cardElement.style.backgroundColor = card.background;
+    cardElement.card = card;
 
     const cardName = document.createElement("div");
     cardName.className = "cardName";
@@ -77,9 +153,11 @@ function renderHand() {
     const cardImage = document.createElement("img");
     cardImage.className = "cardImage";
     cardImage.src = card.image;
+    cardImage.draggable = false;
 
     cardElement.appendChild(cardName);
     cardElement.appendChild(cardImage);
+    cardElement.addEventListener("mousedown", onMouseDown);
     hand.appendChild(cardElement);
   });
 }
@@ -90,6 +168,7 @@ endTurnButton.onclick = endTurn;
 startTurn();
 
 function clearCacheAndReload() {
+  cardElement.addEventListener("mousedown", onMouseDown);
   if ("caches" in window) {
     caches
       .keys()
@@ -113,3 +192,45 @@ function handleKeyRelease(event) {
 }
 
 document.addEventListener("keyup", handleKeyRelease);
+
+async function getLatestCommitMessage() {
+  const url =
+    "https://api.github.com/repos/AbnormalNormality/PokemonUtils/commits/main";
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+    const data = await response.json();
+
+    const isoDate = data.commit.author.date;
+    const formattedDate = new Date(isoDate).toLocaleString("en-Au", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "shortGeneric",
+    });
+
+    author = data.commit.author;
+    message = data.commit.message;
+
+    console.log(`${formattedDate}: ${message}`);
+  } catch (error) {
+    console.log("Error fetching latest commit");
+  }
+}
+
+function startMessage() {
+  console.log(
+    "Thank you for playing %cInfiniteCG%c!",
+    "color: #090",
+    "color: #000"
+  );
+  console.log("Alt+R to clear cache/reload");
+}
+
+startMessage();
+getLatestCommitMessage();
