@@ -4,8 +4,10 @@
   --cardName-background: #cccd;
   --cardName-text-colour: #000;
   --cardName-shadow-colour: #fff;
+  --enemyHp-progress-colour: #c00;
 
   --border-colour: #000;
+  --card-border-colour: #444;
 
   --card-aspect-ratio: 40 / 59; /* StS card dimensions */
 }
@@ -29,9 +31,24 @@ body {
   padding: 0 2%;
   position: relative;
   overflow-y: hidden;
+  user-select: none;
 }
 
-.card {
+#enemies {
+  background-color: var(--hand-colour);
+  border-top: 1px solid var(--border-colour);
+  align-items: center;
+  justify-content: space-evenly;
+  overflow-x: auto;
+  gap: 2%;
+  padding: 0 2%;
+  position: relative;
+  overflow-y: hidden;
+  user-select: none;
+}
+
+.card,
+.enemy {
   background-color: var(--card-background);
   height: 85%;
   position: relative;
@@ -45,12 +62,18 @@ body {
   cursor: grab;
 }
 
-.card:hover {
+.enemy {
+  cursor: unset;
+}
+
+.card:hover,
+.enemy:hover {
   transform: scale(1, 1.1);
   z-index: 10;
 }
 
-.cardName {
+.cardName,
+.enemyName {
   background-color: var(--cardName-background);
   width: fit-content;
   margin: 0 auto;
@@ -65,10 +88,11 @@ body {
   padding: 0 5px;
   border-radius: 10px;
   text-align: center;
-  user-select: none;
+  top: 2.5%;
 }
 
-.cardImage {
+.cardImage,
+.enemyImage {
   position: absolute;
   top: 0;
   left: 0;
@@ -76,6 +100,62 @@ body {
   height: 100%;
   z-index: 0;
   object-fit: cover;
+}
+
+.enemyHp {
+  position: absolute;
+  bottom: 2.5%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  z-index: 1;
+  background-color: transparent;
+  border: none;
+}
+
+.enemyHp::-webkit-progress-bar {
+  background-color: transparent;
+  border-radius: 10px;
+}
+
+.enemyHp::-webkit-progress-value {
+  background-color: var(--enemyHp-progress-colour);
+  border-radius: 10px;
+}
+
+.enemyHp::-moz-progress-bar {
+  background-color: var(--enemyHp-progress-colour);
+  border-radius: 10px;
+}
+
+.enemyHp::-ms-progress-bar {
+  background-color: transparent;
+}
+
+.enemyHp::-ms-progress-value {
+  background-color: var(--enemyHp-progress-colour);
+  border-radius: 10px;
+}
+
+.enemyHpValue {
+  position: absolute;
+  bottom: 2.5%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-weight: bold;
+  z-index: 2;
+  font-size: 0.8em;
+}
+
+.draggedCard {
+  position: absolute;
+  width: fit-content;
+  height: fit-content;
+  z-index: 1000;
+  pointer-events: none;
+  margin: 0;
+  cursor: grabbing;
 }
 
 #enemies {
@@ -87,4 +167,11 @@ body {
 #middle {
   flex: 1;
   display: flex;
+}
+
+.enemyHpValue,
+button,
+.cardName,
+.enemyName {
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
