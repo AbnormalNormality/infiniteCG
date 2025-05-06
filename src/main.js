@@ -205,9 +205,10 @@ function onMouseUp(event) {
       const indexInHand = targetEnemy.getAttribute("data-index-in-enemies");
       targetEnemyData.push(combat.enemies[parseInt(indexInHand)]);
     } else if (targetEnemy === "all") {
-      targetEnemyData.push(combat.enemies);
+      targetEnemyData.push(...combat.enemies);
     }
 
+    console.log(targetEnemyData);
     if (targetEnemyData.length > 0) {
       cardInteraction(draggedCardData, targetEnemyData);
     }
