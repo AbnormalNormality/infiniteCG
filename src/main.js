@@ -27,7 +27,7 @@ rows,
 like,
 more
 than
-3`,
+:3`,
     },
   },
   enemies: {
@@ -137,10 +137,12 @@ let draggedCard = null;
 let offsetX = 0;
 let offsetY = 0;
 
-function onMouseDown(event) {
-  if (player.energy <= 0) {
-    return;
-  }
+function onStart(event) {
+  if (player.energy <= 0) return;
+
+  const isTouch = event.type === "touchstart";
+  const clientX = isTouch ? event.touches[0].clientX : event.clientX;
+  const clientY = isTouch ? event.touches[0].clientY : event.clientY;
 
   const original = event.currentTarget;
   const rect = original.getBoundingClientRect();
@@ -160,65 +162,73 @@ function onMouseDown(event) {
 
   document.body.appendChild(draggedCard);
 
-  offsetX = event.clientX - rect.left;
-  offsetY = event.clientY - rect.top;
+  offsetX = clientX - rect.left;
+  offsetY = clientY - rect.top;
 
-  document.addEventListener("mousemove", onMouseMove);
-  document.addEventListener("mouseup", onMouseUp);
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("mouseup", onEnd);
+  document.addEventListener("touchmove", onMove, { passive: false });
+  document.addEventListener("touchend", onEnd);
 }
 
-function onMouseMove(event) {
-  if (draggedCard) {
-    draggedCard.style.left = `${event.clientX - offsetX}px`;
-    draggedCard.style.top = `${event.clientY - offsetY}px`;
+function onMove(event) {
+  if (!draggedCard) return;
+
+  const isTouch = event.type === "touchmove";
+  const clientX = isTouch ? event.touches[0].clientX : event.clientX;
+  const clientY = isTouch ? event.touches[0].clientY : event.clientY;
+
+  draggedCard.style.left = `${clientX - offsetX}px`;
+  draggedCard.style.top = `${clientY - offsetY}px`;
+
+  if (isTouch) {
+    event.preventDefault();
   }
 }
 
-function onMouseUp(event) {
-  if (draggedCard) {
-    const indexInHand = draggedCard.getAttribute("data-index-in-hand");
-    const draggedCardData = player.hand[parseInt(indexInHand)];
+function onEnd(event) {
+  if (!draggedCard) return;
 
-    const releasePointX = event.clientX;
-    const releasePointY = event.clientY;
+  const isTouch = event.type === "touchend";
+  const clientX = isTouch ? event.changedTouches[0].clientX : event.clientX;
+  const clientY = isTouch ? event.changedTouches[0].clientY : event.clientY;
 
-    const elementBelowRelease = document.elementFromPoint(
-      releasePointX,
-      releasePointY
-    );
+  const indexInHand = draggedCard.getAttribute("data-index-in-hand");
+  const draggedCardData = player.hand[parseInt(indexInHand)];
 
-    let targetEnemy = null;
-    if (elementBelowRelease.classList.contains("enemy")) {
-      targetEnemy = elementBelowRelease;
-    } else if (
-      elementBelowRelease.classList.contains("enemyName") ||
-      elementBelowRelease.classList.contains("enemyImage")
-    ) {
-      targetEnemy = elementBelowRelease.parentElement;
-    } else if (elementBelowRelease.id == "enemies") {
-      targetEnemy = "all";
-    }
+  const elementBelowRelease = document.elementFromPoint(clientX, clientY);
 
-    let targetEnemyData = [];
-
-    if (targetEnemy && targetEnemy !== "all") {
-      const indexInHand = targetEnemy.getAttribute("data-index-in-enemies");
-      targetEnemyData.push(combat.enemies[parseInt(indexInHand)]);
-    } else if (targetEnemy === "all") {
-      targetEnemyData.push(...combat.enemies);
-    }
-
-    console.log(targetEnemyData);
-    if (targetEnemyData.length > 0) {
-      cardInteraction(draggedCardData, targetEnemyData);
-    }
-
-    draggedCard.remove();
-    draggedCard = null;
+  let targetEnemy = null;
+  if (elementBelowRelease.classList.contains("enemy")) {
+    targetEnemy = elementBelowRelease;
+  } else if (
+    elementBelowRelease.classList.contains("enemyName") ||
+    elementBelowRelease.classList.contains("enemyImage")
+  ) {
+    targetEnemy = elementBelowRelease.parentElement;
+  } else if (elementBelowRelease.id == "enemies") {
+    targetEnemy = "all";
   }
 
-  document.removeEventListener("mousemove", onMouseMove);
-  document.removeEventListener("mouseup", onMouseUp);
+  let targetEnemyData = [];
+  if (targetEnemy && targetEnemy !== "all") {
+    const enemyIndex = targetEnemy.getAttribute("data-index-in-enemies");
+    targetEnemyData.push(combat.enemies[parseInt(enemyIndex)]);
+  } else if (targetEnemy === "all") {
+    targetEnemyData.push(...combat.enemies);
+  }
+
+  if (targetEnemyData.length > 0) {
+    cardInteraction(draggedCardData, indexInHand, targetEnemyData);
+  }
+
+  draggedCard.remove();
+  draggedCard = null;
+
+  document.removeEventListener("mousemove", onMove);
+  document.removeEventListener("mouseup", onEnd);
+  document.removeEventListener("touchmove", onMove);
+  document.removeEventListener("touchend", onEnd);
 }
 
 function renderHand() {
@@ -246,7 +256,10 @@ function renderHand() {
     cardElement.appendChild(cardName);
     cardElement.appendChild(cardImage);
     cardElement.appendChild(cardDescription);
-    cardElement.addEventListener("mousedown", onMouseDown);
+
+    cardElement.addEventListener("mousedown", onStart);
+    cardElement.addEventListener("touchstart", onStart, { passive: false });
+
     hand.appendChild(cardElement);
   });
 }
@@ -311,8 +324,12 @@ function endTurn() {
 
 function draw(amount) {
   let i = 0;
-  while (i < amount && player.deck.length + player.discardPile.length > 0) {
+  while (i < amount) {
     if (player.deck.length === 0) {
+      if (player.discardPile.length === 0) {
+        break;
+      }
+
       player.deck.push(...player.discardPile);
       player.discardPile.length = 0;
       shuffle(player.deck);
@@ -336,7 +353,7 @@ function addEnemy(enemy) {
   combat.enemies.push(enemy);
 }
 
-function cardInteraction(card, targets) {
+function cardInteraction(card, card_index_in_hand, targets) {
   if (player.energy <= 0) {
     return;
   }
@@ -345,6 +362,10 @@ function cardInteraction(card, targets) {
   targets.forEach((enemy) => {
     modifyEnemyHp(enemy, -1);
   });
+
+  let c = Object.assign({}, player.hand[card_index_in_hand]);
+  player.hand.splice(card_index_in_hand, 1);
+  player.discardPile.push(c);
 
   updateDisplay();
 }
@@ -364,10 +385,9 @@ function updatePlayerUi() {
   playerHp.value = player.hp;
   playerHp.max = player.maxHp;
 
+  // playerEnergy.textContent = `${player.energy} / ${player.turnEnergy} Energy`;
   playerEnergy.value = player.energy;
   playerEnergy.max = player.turnEnergy;
-
-  // playerEnergy.textContent = `${player.energy} / ${player.turnEnergy} Energy`;
 }
 
 initPlayer();
