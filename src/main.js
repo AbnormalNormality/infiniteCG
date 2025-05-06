@@ -138,7 +138,6 @@ class Combat {
     this.turnEntity = [player, ...this.enemies][
       this.turnIndex % this.enemies.length
     ];
-    console.log(player);
 
     this.turnEntity.startTurn();
   }
@@ -421,17 +420,6 @@ function updateDisplay() {
   updatePlayerUi();
 }
 
-//
-
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-}
-
-//
-
 const playerHp = document.getElementById("playerHp");
 const playerEnergy = document.getElementById("playerEnergy");
 const playerHpText = document.getElementById("playerHpText");
@@ -449,7 +437,20 @@ function updatePlayerUi() {
   playerEnergyText.textContent = `${player.energy} / ${player.turnEnergy} Energy`;
 }
 
+//
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+//
+
 endTurnButton.onclick = player.endTurn.bind(player);
+
+//
 
 function clearCacheAndReload() {
   if ("caches" in window) {
@@ -471,12 +472,14 @@ function clearCacheAndReload() {
 function handleKeyRelease(event) {
   if (event.altKey && event.code === "KeyR") {
     clearCacheAndReload();
+  } else if (event.altKey && event.code === "KeyG") {
+    window.open("https://github.com/AbnormalNormality/InfiniteCG", "_blank");
   }
 }
 
 document.addEventListener("keyup", handleKeyRelease);
 
-combat.startTurn();
+//
 
 function startMessage() {
   console.log(
@@ -485,6 +488,8 @@ function startMessage() {
     "color: #000"
   );
   console.log("Alt+R to clear cache/reload");
+  console.log("Alt+G to open the game's GitHub repository");
 }
 
 startMessage();
+combat.startTurn();
