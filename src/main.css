@@ -178,6 +178,26 @@ body {
   border-bottom: 1px solid var(--border-colour);
 }
 
+#playerStats {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) translateY(-33%);
+  background-color: var(--card-background);
+  padding: 10px;
+  border-radius: 10px;
+  bottom: 33%;
+  flex-direction: column;
+}
+
+#playerStats > * {
+  display: flex;
+  margin: 0 auto;
+}
+
+#playerStats > *:not(progress) {
+  width: fit-content;
+}
+
 #hand,
 #enemies,
 #middle {
@@ -188,6 +208,7 @@ body {
 .enemyHpValue,
 button,
 .cardName,
-.enemyName {
+.enemyName,
+#playerStats > * {
   font-family: Verdana, Geneva, Tahoma, sans-serif;
 }

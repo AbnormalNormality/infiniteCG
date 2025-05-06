@@ -1,93 +1,184 @@
+class Base {
+  copy() {
+    return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
+  }
+}
+
+class Card extends Base {
+  constructor(id, name, image, background, description) {
+    super();
+    this.id = id;
+    this.name = name;
+    this.image = image;
+    this.background = background;
+    this.description = description;
+  }
+}
+
+class Enemy extends Base {
+  constructor(id, name, image, background, maxHp) {
+    super();
+    this.id = id;
+    this.name = name;
+    this.image = image;
+    this.background = background;
+    this.maxHp = maxHp;
+    this.hp = 0;
+  }
+
+  startTurn() {
+    this.endTurn();
+  }
+
+  endTurn() {
+    combat.endTurn();
+  }
+
+  modifyEnemyHp(value) {
+    this.hp = Math.max(0, enemy.hp + value);
+  }
+}
+
+class Player {
+  constructor() {
+    this.hand = [];
+    this.deck = [];
+    this.discardPile = [];
+
+    this.maxHp = 50;
+    this.hp = this.maxHp;
+
+    this.energy = 0;
+    this.turnEnergy = 3;
+  }
+
+  draw(amount) {
+    let i = 0;
+    while (i < amount) {
+      if (player.deck.length === 0) {
+        if (player.discardPile.length === 0) {
+          break;
+        }
+
+        player.deck.push(...player.discardPile);
+        player.discardPile.length = 0;
+        shuffle(player.deck);
+      }
+      player.hand.push(player.deck.pop());
+      i++;
+    }
+  }
+
+  startTurn() {
+    player.energy = player.turnEnergy;
+    player.draw(5);
+
+    endTurnButton.disabled = false;
+    updateDisplay();
+  }
+
+  endTurn() {
+    player.discardPile.push(...player.hand);
+    player.hand.length = 0;
+
+    endTurnButton.disabled = true;
+    combat.endTurn();
+  }
+
+  cardInteraction(card, card_index_in_hand, targets) {
+    if (player.energy <= 0) {
+      return;
+    }
+    player.energy--;
+
+    targets.forEach((enemy) => {
+      enemy.modifyEnemyHp(-1);
+    });
+
+    let c = Object.assign({}, player.hand[card_index_in_hand]);
+    player.hand.splice(card_index_in_hand, 1);
+    player.discardPile.push(c);
+
+    updateDisplay();
+  }
+}
+
+class Combat {
+  constructor() {
+    this.enemies = [];
+
+    this.turnIndex = 0;
+    this.turnEntity = null;
+  }
+
+  addEnemy(enemy) {
+    enemy = enemy.copy();
+
+    enemy.hp = enemy.maxHp;
+    this.enemies.push(enemy);
+  }
+
+  startTurn() {
+    this.turnIndex++;
+    this.turnEntity = [player, ...this.enemies][
+      this.turnIndex % this.enemies.length
+    ];
+
+    this.turnEntity.startTurn();
+  }
+
+  endTurn() {
+    this.startTurn();
+  }
+}
+
 const presets = {
   cards: {
-    0: {
-      name: "Debug Card 1",
-      image: "assets/cards/0.png",
-      background: "#fdd",
-      id: 0,
-      type: "card",
-      description: "Debug description",
-    },
-    1: {
-      name: "Debug Card 2",
-      image: "assets/cards/1.png",
-      background: "#fdf",
-      id: 1,
-      type: "card",
-      description: "Looooooooooooooooooooooooooooooooong description",
-    },
-    2: {
-      name: "Debug Card 3",
-      image: "assets/cards/2.png",
-      background: "#ddf",
-      id: 2,
-      type: "card",
-      description: `Multiple
-rows,
-like,
-more
-than
-:3`,
-    },
+    0: new Card(
+      0,
+      "Debug Card 1",
+      "assets/cards/0.png",
+      "#fdd",
+      "Debug description"
+    ),
+    1: new Card(
+      1,
+      "Debug Card 2",
+      "assets/cards/1.png",
+      "#fdf",
+      "Looooooooooooooooooooooooooooooooong description"
+    ),
+    2: new Card(
+      2,
+      "Debug Card 3",
+      "assets/cards/2.png",
+      "#ddf",
+      `Multiple\nrows,\nlike,\nmore\nthan\n:3`
+    ),
   },
   enemies: {
-    0: {
-      name: "Debug Enemy 1",
-      image: "assets/enemies/0.png",
-      background: "#dfd",
-      id: 0,
-      type: "enemy",
-      maxHp: 50,
-      hp: 0,
-    },
-    1: {
-      name: "Debug Enemy 2",
-      image: "assets/enemies/1.png",
-      background: "#ddf",
-      id: 1,
-      type: "enemy",
-      maxHp: 69,
-      hp: 0,
-    },
-    2: {
-      name: "Debug Enemy 3",
-      image: "assets/enemies/2.png",
-      background: "#dff",
-      id: 2,
-      type: "enemy",
-      maxHp: 42,
-      hp: 0,
-    },
+    0: new Enemy(0, "Debug Enemy 1", "assets/enemies/0.png", "#dfd", 50),
+    1: new Enemy(1, "Debug Enemy 2", "assets/enemies/1.png", "#ddf", 69),
+    2: new Enemy(2, "Debug Enemy 3", "assets/enemies/2.png", "#dff", 42),
   },
 };
 
-const player = {
-  hand: [],
-  deck: [],
-  discardPile: [],
-  maxHp: 50,
-  hp: 0,
-  energy: 0,
-  turnEnergy: 3,
-};
+const player = new Player();
 
-player.discardPile.push(presets.cards[0]);
-player.discardPile.push(presets.cards[0]);
-player.discardPile.push(presets.cards[0]);
-player.discardPile.push(presets.cards[0]);
-player.discardPile.push(presets.cards[1]);
-player.discardPile.push(presets.cards[1]);
-player.discardPile.push(presets.cards[1]);
-player.discardPile.push(presets.cards[2]);
+player.discardPile = player.discardPile.concat(
+  new Array(4).fill(presets.cards[0]),
+  new Array(3).fill(presets.cards[1]),
+  new Array(1).fill(presets.cards[2])
+);
 
-const combat = {
-  enemies: [],
-};
+const combat = new Combat();
 
-addEnemy(presets.enemies[0]);
-addEnemy(presets.enemies[1]);
-addEnemy(presets.enemies[2]);
-addEnemy(presets.enemies[2]);
+combat.addEnemy(presets.enemies[0]);
+combat.addEnemy(presets.enemies[1]);
+combat.addEnemy(presets.enemies[2]);
+combat.addEnemy(presets.enemies[2]);
+
+//
 
 const hand = document.getElementById("hand");
 const enemies = document.getElementById("enemies");
@@ -132,6 +223,8 @@ function smoothScroll(object) {
   };
   requestAnimationFrame(step);
 }
+
+//
 
 let draggedCard = null;
 let offsetX = 0;
@@ -219,7 +312,7 @@ function onEnd(event) {
   }
 
   if (targetEnemyData.length > 0) {
-    cardInteraction(draggedCardData, indexInHand, targetEnemyData);
+    player.cardInteraction(draggedCardData, indexInHand, targetEnemyData);
   }
 
   draggedCard.remove();
@@ -230,6 +323,8 @@ function onEnd(event) {
   document.removeEventListener("touchmove", onMove);
   document.removeEventListener("touchend", onEnd);
 }
+
+//
 
 function renderHand() {
   hand.innerHTML = "";
@@ -310,34 +405,7 @@ function updateDisplay() {
   updatePlayerUi();
 }
 
-function startTurn() {
-  player.energy = player.turnEnergy;
-  draw(5);
-  updateDisplay();
-}
-
-function endTurn() {
-  player.discardPile.push(...player.hand);
-  player.hand.length = 0;
-  startTurn();
-}
-
-function draw(amount) {
-  let i = 0;
-  while (i < amount) {
-    if (player.deck.length === 0) {
-      if (player.discardPile.length === 0) {
-        break;
-      }
-
-      player.deck.push(...player.discardPile);
-      player.discardPile.length = 0;
-      shuffle(player.deck);
-    }
-    player.hand.push(player.deck.pop());
-    i++;
-  }
-}
+//
 
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -346,53 +414,26 @@ function shuffle(array) {
   }
 }
 
-function addEnemy(enemy) {
-  enemy = Object.assign({}, enemy);
-
-  enemy.hp = enemy.maxHp;
-  combat.enemies.push(enemy);
-}
-
-function cardInteraction(card, card_index_in_hand, targets) {
-  if (player.energy <= 0) {
-    return;
-  }
-  player.energy--;
-
-  targets.forEach((enemy) => {
-    modifyEnemyHp(enemy, -1);
-  });
-
-  let c = Object.assign({}, player.hand[card_index_in_hand]);
-  player.hand.splice(card_index_in_hand, 1);
-  player.discardPile.push(c);
-
-  updateDisplay();
-}
-
-function modifyEnemyHp(enemy, value) {
-  enemy.hp = Math.max(0, enemy.hp + value);
-}
-
-function initPlayer() {
-  player.hp = player.maxHp;
-}
+//
 
 const playerHp = document.getElementById("playerHp");
 const playerEnergy = document.getElementById("playerEnergy");
+const playerHpText = document.getElementById("playerHpText");
+const playerEnergyText = document.getElementById("playerEnergyText");
 
 function updatePlayerUi() {
   playerHp.value = player.hp;
   playerHp.max = player.maxHp;
 
-  // playerEnergy.textContent = `${player.energy} / ${player.turnEnergy} Energy`;
+  playerHpText.textContent = `${player.hp} / ${player.maxHp} HP`;
+
   playerEnergy.value = player.energy;
   playerEnergy.max = player.turnEnergy;
+
+  playerEnergyText.textContent = `${player.energy} / ${player.turnEnergy} Energy`;
 }
 
-initPlayer();
-
-endTurnButton.onclick = endTurn;
+endTurnButton.onclick = player.endTurn;
 
 function clearCacheAndReload() {
   if ("caches" in window) {
@@ -419,7 +460,7 @@ function handleKeyRelease(event) {
 
 document.addEventListener("keyup", handleKeyRelease);
 
-startTurn();
+combat.startTurn();
 
 function startMessage() {
   console.log(
