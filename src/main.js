@@ -5,14 +5,28 @@ class Base {
 }
 
 class Card extends Base {
-  constructor(id, name, image, background, description) {
+  constructor(
+    id,
+    name,
+    image,
+    background,
+    description,
+    cardEffect,
+    singleTarget
+  ) {
     super();
     this.id = id;
     this.name = name;
     this.image = image;
     this.background = background;
     this.description = description;
+    this.cardEffect = cardEffect;
+    this.singleTarget = singleTarget || false;
   }
+}
+
+class CardEffect {
+  constructor() {}
 }
 
 class Entity extends Base {
@@ -101,14 +115,17 @@ class Player extends Entity {
   }
 
   cardInteraction(card, card_index_in_hand, targets) {
-    if (this.energy <= 0) {
+    if (this.energy <= 0 || (card.singleTarget && targets.length > 1)) {
       return;
     }
     this.energy--;
 
-    targets.forEach((enemy) => {
-      enemy.modifyHp(-1);
-    });
+    const cardEffect = card.cardEffect;
+    console.log(cardEffect);
+
+    // targets.forEach((enemy) => {
+    //   enemy.modifyHp(-1);
+    // });
 
     let c = Object.assign({}, this.hand[card_index_in_hand]);
     this.hand.splice(card_index_in_hand, 1);
@@ -154,21 +171,25 @@ const presets = {
       "Debug Card 1",
       "assets/cards/0.png",
       "#fdd",
-      "Debug description"
+      "Debug description (single target)",
+      new CardEffect(),
+      true
     ),
     1: new Card(
       1,
       "Debug Card 2",
       "assets/cards/1.png",
       "#fdf",
-      "Looooooooooooooooooooooooooooooooong description"
+      "Looooooooooooooooooooooooooooooooong description",
+      new CardEffect()
     ),
     2: new Card(
       2,
       "Debug Card 3",
       "assets/cards/2.png",
       "#ddf",
-      `Multiple\nrows,\nlike,\nmore\nthan\n:3`
+      `Multiple\nrows,\nlike,\nmore\nthan\n:3`,
+      new CardEffect()
     ),
   },
   enemies: {
@@ -205,6 +226,13 @@ let isScrolling = false;
 hand.addEventListener(
   "wheel",
   function (event) {
+    if (
+      event.target &&
+      event.target.closest &&
+      event.target.closest(".cardDescription")
+    )
+      return;
+
     scrollAmount += event.deltaY;
     event.preventDefault();
     if (!isScrolling) smoothScroll(hand);
@@ -245,8 +273,25 @@ let draggedCard = null;
 let offsetX = 0;
 let offsetY = 0;
 
+function f(event) {
+  if (event.target && event.target.closest) {
+    const description = event.target.closest(".cardDescription");
+    if (description) {
+      const rect = description.getBoundingClientRect();
+      const scrollbarWidth = description.offsetWidth - description.clientWidth;
+
+      if (scrollbarWidth > 0) {
+        const overScrollbar =
+          event.clientX >= rect.right - scrollbarWidth &&
+          event.clientX <= rect.right;
+        if (overScrollbar) return true;
+      }
+    }
+  } else return false;
+}
+
 function onStart(event) {
-  if (player.energy <= 0) return;
+  if (player.energy <= 0 || f(event)) return;
 
   const isTouch = event.type === "touchstart";
   const clientX = isTouch ? event.touches[0].clientX : event.clientX;

@@ -149,6 +149,9 @@ body {
   font-weight: bold;
   z-index: 2;
   font-size: 0.8em;
+
+  width: 100%;
+  text-align: center;
 }
 
 .draggedCard {
@@ -172,6 +175,8 @@ body {
   border-radius: 5px;
   text-align: center;
   overflow-wrap: anywhere;
+  max-height: 30%;
+  overflow-y: auto;
 }
 
 #enemies {
