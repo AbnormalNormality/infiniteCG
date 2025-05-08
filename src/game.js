@@ -49,6 +49,8 @@ class Entity extends Base {
     this.maxHp = maxHp;
     this.hp = this.maxHp;
     this.turnIndex = -1;
+
+    this.shield = 0;
   }
 
   modifyHp(value) {
@@ -62,6 +64,8 @@ class Entity extends Base {
 
   startTurn() {
     this.turnIndex++;
+
+    this.shield = 0;
   }
 
   die() {
@@ -77,8 +81,6 @@ class Enemy extends Entity {
     this.name = name;
     this.image = image;
     this.background = background;
-
-    this.shield = 0;
   }
 
   startTurn() {
