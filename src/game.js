@@ -28,7 +28,7 @@ class Card extends Base {
 }
 
 class CardEffect {
-  constructor(events) {
+  constructor(...events) {
     this.events = events || [];
   }
 }
