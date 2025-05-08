@@ -1,3 +1,4 @@
 *.kra
 
 .vscode/settings.json
+localOnly/

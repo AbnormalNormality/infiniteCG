@@ -12,7 +12,8 @@ class Card extends Base {
     background,
     description,
     cardEffect,
-    singleTarget
+    singleTarget,
+    noTarget
   ) {
     super();
     this.id = id;
@@ -21,12 +22,24 @@ class Card extends Base {
     this.background = background;
     this.description = description;
     this.cardEffect = cardEffect;
-    this.singleTarget = singleTarget || false;
+    this.singleTarget = singleTarget;
+    this.noTarget = noTarget;
   }
 }
 
 class CardEffect {
-  constructor() {}
+  constructor(events) {
+    this.events = events || [];
+  }
+}
+
+class CardEvent {
+  constructor(eventType, value1, value2, value3) {
+    this.eventType = eventType;
+    this.value1 = value1;
+    this.value2 = value2;
+    this.value3 = value3;
+  }
 }
 
 class Entity extends Base {
@@ -39,11 +52,20 @@ class Entity extends Base {
   }
 
   modifyHp(value) {
-    this.hp = Math.max(0, this.hp + value);
+    // this.hp = Math.max(0, this.hp + value);
+    this.hp += value;
+
+    if (this.hp <= 0) {
+      this.die();
+    }
   }
 
   startTurn() {
     this.turnIndex++;
+  }
+
+  die() {
+    combat.enemies.splice(combat.enemies.indexOf(this), 1);
   }
 }
 
@@ -55,6 +77,8 @@ class Enemy extends Entity {
     this.name = name;
     this.image = image;
     this.background = background;
+
+    this.shield = 0;
   }
 
   startTurn() {
@@ -77,6 +101,8 @@ class Player extends Entity {
 
     this.energy = 0;
     this.turnEnergy = 3;
+
+    this.shield = 0;
   }
 
   draw(amount) {
@@ -103,6 +129,13 @@ class Player extends Entity {
     this.draw(5);
 
     endTurnButton.disabled = false;
+
+    combat.newEnemyTimer.current++;
+    if (combat.newEnemyTimer.current >= combat.newEnemyTimer.peak) {
+      combat.newEnemyTimer.current = 0;
+      combat.generateEnemy(1);
+    }
+
     updateDisplay();
   }
 
@@ -120,18 +153,43 @@ class Player extends Entity {
     }
     this.energy--;
 
-    const cardEffect = card.cardEffect;
-    console.log(cardEffect);
+    if (card.noTarget && targets.length > 0) {
+      targets.length == 0;
+    }
 
-    // targets.forEach((enemy) => {
-    //   enemy.modifyHp(-1);
-    // });
+    const cardEffect = card.cardEffect;
+
+    cardEffect.events.forEach((event) => {
+      if (event.eventType == "damage") {
+        targets.forEach((target) => {
+          for (let _ = 0; _ < value2 || 1; _++) {
+            target.modifyHp(-event.value1);
+          }
+        });
+      } else if (event.eventType == "shield") {
+        this.shield += event.value1;
+      }
+    });
+
+    if (cardEffect.selfShieldAmount) {
+      this.shield += cardEffect.selfShieldAmount;
+    }
 
     let c = Object.assign({}, this.hand[card_index_in_hand]);
     this.hand.splice(card_index_in_hand, 1);
     this.discardPile.push(c);
 
     updateDisplay();
+  }
+
+  addCard(card, amount) {
+    let x = 0;
+
+    while (x < amount) {
+      card = card.copy();
+      this.discardPile.push(card);
+      x++;
+    }
   }
 }
 
@@ -141,26 +199,67 @@ class Combat {
 
     this.turnIndex = -1;
     this.turnEntity = null;
+
+    this.newEnemyTimer = new Timer(5);
+
+    this.enemyHpMultModifier = 1.05;
+    this.enemyHpMultTurns = 5;
   }
 
   addEnemy(enemy) {
     enemy = enemy.copy();
 
+    enemy.maxHp = Math.ceil(enemy.maxHp * this.getEnemyHpMult());
     enemy.hp = enemy.maxHp;
+
     this.enemies.push(enemy);
   }
 
   startTurn() {
     this.turnIndex++;
-    this.turnEntity = [player, ...this.enemies][
-      this.turnIndex % this.enemies.length
-    ];
+
+    if (this.enemies.length) {
+      this.turnEntity = [player, ...this.enemies][
+        this.turnIndex % this.enemies.length
+      ];
+    } else {
+      this.turnEntity = player;
+      this.generateEnemy(2);
+      this.newEnemyTimer.current = 0;
+    }
 
     this.turnEntity.startTurn();
   }
 
   endTurn() {
     this.startTurn();
+  }
+
+  generateEnemy(times) {
+    let x = 0;
+    const enemiesLen = Object.keys(presets.enemies).length;
+
+    while (x < times) {
+      const r = Math.floor(Math.random() * enemiesLen);
+      this.addEnemy(presets.enemies[r]);
+      x++;
+    }
+  }
+
+  getEnemyHpMult() {
+    if (player.turnIndex <= 1) {
+      return 1;
+    } else {
+      let e = Math.floor(player.turnIndex / this.enemyHpMultTurns);
+      return Math.pow(this.enemyHpMultModifier, e);
+    }
+  }
+}
+
+class Timer {
+  constructor(peak) {
+    this.current = -1;
+    this.peak = peak;
   }
 }
 
@@ -171,8 +270,8 @@ const presets = {
       "Debug Card 1",
       "assets/cards/0.png",
       "#fdd",
-      "Debug description (single target)",
-      new CardEffect(),
+      "Deal 999 damage to a single target",
+      new CardEffect(new CardEvent("damage", 999, 1)),
       true
     ),
     1: new Card(
@@ -180,8 +279,10 @@ const presets = {
       "Debug Card 2",
       "assets/cards/1.png",
       "#fdf",
-      "Looooooooooooooooooooooooooooooooong description",
-      new CardEffect()
+      "Gain 5 shield",
+      new CardEffect(new CardEvent("shield", 5)),
+      false,
+      true
     ),
     2: new Card(
       2,
@@ -201,18 +302,13 @@ const presets = {
 
 const player = new Player(50);
 
-player.discardPile = player.discardPile.concat(
-  new Array(4).fill(presets.cards[0]),
-  new Array(3).fill(presets.cards[1]),
-  new Array(1).fill(presets.cards[2])
-);
+player.addCard(presets.cards[0], 4);
+player.addCard(presets.cards[1], 3);
+player.addCard(presets.cards[2], 1);
 
 const combat = new Combat();
 
-combat.addEnemy(presets.enemies[0]);
-combat.addEnemy(presets.enemies[1]);
-combat.addEnemy(presets.enemies[2]);
-combat.addEnemy(presets.enemies[2]);
+combat.generateEnemy(3);
 
 //
 
@@ -361,17 +457,29 @@ function onEnd(event) {
     targetEnemy = elementBelowRelease.parentElement;
   } else if (elementBelowRelease.id == "enemies") {
     targetEnemy = "all";
+  } else if (
+    elementBelowRelease.id == "middle" ||
+    elementBelowRelease.id == "playerStats" ||
+    elementBelowRelease.id == "otherStats" ||
+    elementBelowRelease.id == "playerHp" ||
+    elementBelowRelease.id == "playerHpText" ||
+    elementBelowRelease.id == "playerEnergy" ||
+    elementBelowRelease.id == "playerEnergyText" ||
+    elementBelowRelease.id == "turnCounter" ||
+    elementBelowRelease.id == "newEnemyCounter"
+  ) {
+    targetEnemy = "none";
   }
 
   let targetEnemyData = [];
-  if (targetEnemy && targetEnemy !== "all") {
+  if (targetEnemy && targetEnemy !== "all" && targetEnemy !== "none") {
     const enemyIndex = targetEnemy.getAttribute("data-index-in-enemies");
     targetEnemyData.push(combat.enemies[parseInt(enemyIndex)]);
   } else if (targetEnemy === "all") {
     targetEnemyData.push(...combat.enemies);
   }
 
-  if (targetEnemyData.length > 0) {
+  if (targetEnemyData.length > 0 || targetEnemy == "none") {
     player.cardInteraction(draggedCardData, indexInHand, targetEnemyData);
   }
 
@@ -463,6 +571,7 @@ function updateDisplay() {
   renderHand();
   renderEnemies();
   updatePlayerUi();
+  updateOtherUi();
 }
 
 const playerHp = document.getElementById("playerHp");
@@ -475,11 +584,24 @@ function updatePlayerUi() {
   playerHp.max = player.maxHp;
 
   playerHpText.textContent = `${player.hp} / ${player.maxHp} HP`;
+  if (player.shield > 0) {
+    playerHpText.append(` + ${player.shield}`);
+  }
 
   playerEnergy.value = player.energy;
   playerEnergy.max = player.turnEnergy;
 
   playerEnergyText.textContent = `${player.energy} / ${player.turnEnergy} Energy`;
+}
+
+const turnCounter = document.getElementById("turnCounter");
+const newEnemyCounter = document.getElementById("newEnemyCounter");
+
+function updateOtherUi() {
+  turnCounter.textContent = `Turn ${player.turnIndex + 1}`;
+  newEnemyCounter.textContent = `New enemy spawns in ${
+    combat.newEnemyTimer.peak - combat.newEnemyTimer.current
+  } turns`;
 }
 
 //

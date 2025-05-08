@@ -183,24 +183,33 @@ body {
   border-bottom: 1px solid var(--border-colour);
 }
 
-#playerStats {
+#playerStats, #otherStats {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%) translateY(-33%);
   background-color: var(--card-background);
   padding: 10px;
   border-radius: 10px;
-  bottom: 33%;
   flex-direction: column;
 }
 
-#playerStats > * {
+#playerStats > *, #otherStats > * {
   display: flex;
   margin: 0 auto;
 }
 
-#playerStats > *:not(progress) {
+#playerStats > *:not(progress), #otherStats > *:not(progress) {
   width: fit-content;
+}
+
+#playerStats {
+  left: 50%;
+  transform: translateX(-50%) translateY(-33%);
+  bottom: 33%;
+}
+
+#otherStats {
+  left: 50%;
+  transform: translateX(-50%) translateY(33%);
+  top: 33%;
 }
 
 #hand,
@@ -214,6 +223,6 @@ body {
 button,
 .cardName,
 .enemyName,
-#playerStats > * {
+#playerStats > *, .cardDescription, #playerStats > * {
   font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
