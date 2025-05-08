@@ -223,6 +223,6 @@ body {
 button,
 .cardName,
 .enemyName,
-#playerStats > *, .cardDescription, #playerStats > * {
+#playerStats > *, .cardDescription, #otherStats > * {
   font-family: Verdana, Geneva, Tahoma, sans-serif;
 }

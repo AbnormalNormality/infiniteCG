@@ -651,14 +651,50 @@ document.addEventListener("keyup", handleKeyRelease);
 //
 
 function startMessage() {
+  const basePath =
+    window.location.origin + window.location.pathname.replace(/\/[^/]*$/, "");
+  const creditsLink = basePath + "/pages/credits.html";
+
   console.log(
-    "Thank you for playing %cInfiniteCG%c!",
+    "Thank you for playing %cInfiniteCG%c!\n" +
+      "Alt+R to clear cache/reload\n" +
+      "Alt+G to open the game's GitHub repository\n" +
+      "Alt+C to view the credits: " +
+      creditsLink,
     "color: #090",
     "color: #000"
   );
-  console.log("Alt+R to clear cache/reload");
-  console.log("Alt+G to open the game's GitHub repository");
+}
+
+function checkForUpdates() {
+  const lastUpdate = localStorage.getItem("lastUpdate");
+
+  const repoUrl =
+    "https://api.github.com/repos/abnormalnormality/infinitecg/commits/main";
+
+  fetch(repoUrl)
+    .then((response) => response.json())
+    .then((data) => {
+      if (!Object.keys(data).includes("sha")) {
+        console.error("Invalid response from GitHub API");
+        return;
+      }
+      const currentUpdate = data.sha.substring(0, 7);
+
+      if (!lastUpdate) {
+        localStorage.setItem("lastUpdate", currentUpdate);
+      } else if (lastUpdate !== currentUpdate) {
+        if (confirm("A new update is available. Do you want to reload?")) {
+          localStorage.setItem("lastUpdate", currentUpdate);
+          clearCacheAndReload();
+        }
+      }
+    })
+    .catch((error) => {
+      console.error("Could not check for updates:", error);
+    });
 }
 
 startMessage();
+checkForUpdates();
 combat.startTurn();
