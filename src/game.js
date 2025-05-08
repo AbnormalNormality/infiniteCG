@@ -162,14 +162,20 @@ class Player extends Entity {
     const cardEffect = card.cardEffect;
 
     cardEffect.events.forEach((event) => {
-      if (event.eventType == "damage") {
+      const eventType = event.eventType;
+      const value1 = event.value1;
+      const value2 = event.value2;
+      const value3 = event.value3;
+
+      if (eventType == "damage") {
         targets.forEach((target) => {
-          for (let _ = 0; _ < value2 || 1; _++) {
-            target.modifyHp(-event.value1);
+          const repeats = value2 || 1;
+          for (let i = 0; i < repeats; i++) {
+            target.modifyHp(-value1);
           }
         });
-      } else if (event.eventType == "shield") {
-        this.shield += event.value1;
+      } else if (eventType == "shield") {
+        this.shield += value1;
       }
     });
 
