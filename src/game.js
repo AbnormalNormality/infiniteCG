@@ -649,6 +649,11 @@ function handleKeyRelease(event) {
     clearCacheAndReload();
   } else if (event.altKey && event.code === "KeyG") {
     window.open("https://github.com/AbnormalNormality/InfiniteCG", "_blank");
+  } else if (event.altKey && event.code === "KeyC") {
+    const basePath =
+      window.location.origin + window.location.pathname.replace(/\/[^/]*$/, "");
+    const creditsLink = basePath + "/pages/credits.html";
+    window.open(creditsLink, "_blank");
   }
 }
 
