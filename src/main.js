@@ -48,34 +48,12 @@ function startMessage() {
   );
 }
 
-function checkForUpdates() {
-  const lastUpdate = localStorage.getItem("lastUpdate");
-
-  const repoUrl =
-    "https://api.github.com/repos/abnormalnormality/infinitecg/commits/main";
-
-  fetch(repoUrl)
-    .then((response) => response.json())
-    .then((data) => {
-      if (!Object.keys(data).includes("sha")) {
-        console.error("Invalid response from GitHub API");
-        return;
-      }
-      const currentUpdate = data.sha.substring(0, 7);
-
-      if (!lastUpdate) {
-        localStorage.setItem("lastUpdate", currentUpdate);
-      } else if (lastUpdate !== currentUpdate) {
-        if (confirm("A new update is available. Do you want to reload?")) {
-          localStorage.setItem("lastUpdate", currentUpdate);
-          clearCacheAndReload();
-        }
-      }
-    })
-    .catch((error) => {
-      console.error("Could not check for updates:", error);
-    });
-}
-
 startMessage();
-checkForUpdates();
+
+fetch(
+  "https://cdn.jsdelivr.net/gh/abnormalnormality/scripts-and-pieces@main/update.js"
+)
+  .then((response) => response.text())
+  .then((script) => {
+    eval(script);
+  });
