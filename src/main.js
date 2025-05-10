@@ -51,7 +51,7 @@ function startMessage() {
 startMessage();
 
 fetch(
-  "https://cdn.jsdelivr.net/gh/abnormalnormality/scripts-and-pieces@main/update.js"
+  "https://abnormalnormality.github.io/Scripts-and-Pieces/scripts/update.js"
 )
   .then((response) => response.text())
   .then((script) => {
